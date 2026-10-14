@@ -1,6 +1,6 @@
 # finupdate Roadmap
 
-**Last updated**: 2026-09-17 | **Maintainer**: tuna-os (hanthor)
+**Last updated**: 2026-10-14 | **Maintainer**: tuna-os (hanthor)
 
 ---
 
@@ -23,16 +23,16 @@ terminal chore.
 - **Versioning**: **none** — zero tags, zero GitHub Releases. The publish
   workflow fires on both `main` push and `v*` tags, so builds flow, but the
   OCI index serves unversioned "current builds" with no tag signal.
-- **Health**: active (September 2026); adoption of shared org presets for Renovate (#115) and Simplified Technical English (#116), security polkit rule hardening (#110), rollback runbook (#104), and initial modularization of core version parsing (#123) and registry client tests (#119).
+- **Health**: active (October 2026); security hardening completed (#110, fix: toctou, mutable /tmp, pkexec substring matching); proc-macro-error2 audit resolved; all STE findings cleared; core modularization ongoing; v0.1.0 release gate ready for execution (#141).
 
 ### Priorities
 
 | Priority | Item | Tracking | Status |
 |----------|------|----------|--------|
-| P0 | First tagged release (v0.1.0) — versioned OCI tag & GitHub Release | #65 | 🟡 In Progress |
+| P0 | First tagged release (v0.1.0) — versioned OCI tag & GitHub Release | #141 | 🟡 In Progress |
 | P1 | Harden Polkit rules and binary permissions | #110 | 🟢 Completed |
 | P1 | Standardize CI STE check & Renovate org preset | #115, #116 | 🟢 Completed |
-| P1 | Cargo.lock: unmaintained `proc-macro-error2` audit | #63 | 🟡 Open |
+| P1 | Cargo.lock: unmaintained `proc-macro-error2` audit | #63 | 🟢 Completed |
 | P2 | Core module decoupling & God-file reduction (5 modules ≥1,000 lines) | #62, #111, #123 | 🟡 In Progress |
 | P2 | Shared registry_client tag parser test coverage | #118, #119 | 🟡 In Progress |
 
@@ -46,10 +46,10 @@ terminal chore.
 
 | Goal | Owner | Tracking | Status |
 |------|-------|----------|--------|
-| Polkit security policy path enforcement | architect/sec-check | #110 | 🟢 Completed |
-| Simplified Technical English & Renovate governance adoption | ci-maintainer | #115, #116 | 🟢 Completed |
-| Rollback runbook documentation | docs | #104 | 🟢 Completed |
-| Cut v0.1.0 tag + first GitHub Release | hanthor | #65 | 🟡 Pending Release |
+| Polkit security policy path enforcement | architect/sec-check | #110 | 🟢 Completed (Oct 7) |
+| Simplified Technical English & Renovate governance adoption | ci-maintainer | #115, #116 | 🟢 Completed (Sep 29) |
+| Rollback runbook documentation | docs | #104 | 🟢 Completed (Sep 14) |
+| Cut v0.1.0 tag + first GitHub Release | hanthor | #141 | 🟡 Pending Release |
 
 ### Next Quarter (2026 Q4)
 
