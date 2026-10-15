@@ -29,14 +29,25 @@ concurrency:
 
 jobs:
   publish:
+    # Only a successful CI run for a *push* to this repo's main counts: a
+    # pull_request run from a fork branch also named `main` has
+    # head_branch == 'main' too and must never publish.
     if: >
       github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main')
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     uses: tuna-os/.github/.github/workflows/publish-flatpak.yml@main
     with:
       app-id: org.tunaos.finupdate
       manifest-path: build-aux/org.tunaos.finupdate.json
       repo-name: tuna-os/finupdate
       attach-bundles: true
+      # Build the exact commit CI tested. Under workflow_run, github.sha is
+      # whatever main's HEAD is when this run starts, which may be a newer,
+      # not-yet-tested commit. source-ref is only honoured when source-repo
+      # is set, hence passing this repo explicitly.
+      source-repo: ${{ github.repository }}
+      source-ref: ${{ github.event.workflow_run.head_sha || github.sha }}
     secrets: inherit
