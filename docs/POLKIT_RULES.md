@@ -9,7 +9,7 @@ Finupdate needs root privileges for bootc operations and for system management. 
 ### Purpose
 Allows members of the `wheel` group to run the allowlisted bootc and
 finupdate-runner programs with no password prompt. Members can also reboot the
-system and manage systemd units and unit files. Designed for:
+system. Designed for:
 - Automated tests in CI/CD environments
 - Development/debug mode operations
 - Non-destructive command verification (bootc status, upgrade checks)
@@ -34,14 +34,6 @@ polkit.addRule(function(action, subject) {
         }
         // Allow systemctl reboot for integration testing
         if (action.id == "org.freedesktop.login1.reboot") {
-            return polkit.Result.YES;
-        }
-        // Systemd unit management
-        if (action.id == "org.freedesktop.systemd1.manage-units") {
-            return polkit.Result.YES;
-        }
-        // Systemd unit file management
-        if (action.id == "org.freedesktop.systemd1.manage-unit-files") {
             return polkit.Result.YES;
         }
     }
@@ -75,16 +67,17 @@ Executed via:
 - Polkit action: `org.freedesktop.login1.reboot`
 
 #### Systemd unit management
-- `org.freedesktop.systemd1.manage-units` — Enable, disable, start, stop, or
-  otherwise manage the systemd units used by finupdate, including the `uupd`
-  timer.
-- `org.freedesktop.systemd1.manage-unit-files` — Change systemd unit files,
-  for example to turn a timer on or off.
+The rule does not grant `org.freedesktop.systemd1.manage-units` or
+`org.freedesktop.systemd1.manage-unit-files`. Finupdate turns the `uupd`
+timer on or off with `pkexec systemctl enable|disable --now uupd.timer`.
+`systemctl` then runs as root, so systemd does not ask polkit about the unit.
+`pkexec` asks for the admin password, because `systemctl` is not on the
+allowlist.
 
-The shipped rule grants these two action IDs to the whole `wheel` group. The
-rule does not restrict them to one unit name. Treat changes to the
-finupdate code that select or change systemd units as changes to this
-privilege boundary.
+Do not add a grant for these two actions. A grant for the `wheel` group gives
+each session control of all units and unit files with no password. That is
+root code execution. The `manage-unit-files` action has no unit detail, so a
+rule cannot limit it to one unit.
 
 ### Security Notes
 

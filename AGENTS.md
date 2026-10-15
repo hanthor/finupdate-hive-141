@@ -65,8 +65,7 @@ CI, and that migration is tracked separately. Don't quietly promote it.
 ## Privilege boundary
 
 `build-aux/49-finupdate.polkit.rules` gives members of `wheel`
-**password-less** access to: `org.freedesktop.login1.reboot`,
-`org.freedesktop.systemd1.manage-units` and `manage-unit-files`, and
+**password-less** access to: `org.freedesktop.login1.reboot`, and
 `org.freedesktop.policykit.exec` where the target program's path exactly
 matches an entry in `FINUPDATE_ALLOWED_PROGRAMS` (currently `/usr/bin/bootc`,
 `/usr/sbin/bootc`, `/usr/bin/finupdate-runner`,

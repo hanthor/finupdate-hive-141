@@ -32,13 +32,12 @@ polkit.addRule(function(action, subject) {
         if (action.id == "org.freedesktop.login1.reboot") {
             return polkit.Result.YES;
         }
-        // Systemd unit management (for disabling/enabling uupd timer and other system services)
-        if (action.id == "org.freedesktop.systemd1.manage-units") {
-            return polkit.Result.YES;
-        }
-        // Systemd unit file management (for modifying systemd configuration)
-        if (action.id == "org.freedesktop.systemd1.manage-unit-files") {
-            return polkit.Result.YES;
-        }
+        // No org.freedesktop.systemd1.manage-units / manage-unit-files
+        // grant. finupdate toggles uupd.timer with `pkexec systemctl
+        // {enable,disable} --now uupd.timer`, so systemctl runs as root and
+        // systemd never asks polkit about the unit. An unscoped YES for these
+        // actions gave every wheel session password-less control of every
+        // unit and unit file (root code execution) without finupdate using
+        // it. manage-unit-files also has no per-unit detail to scope it by.
     }
 });
