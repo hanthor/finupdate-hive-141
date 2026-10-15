@@ -119,7 +119,7 @@ Or just open Settings → there's a new **Updates** entry in the sidebar.
 Both surfaces use the same Rust backend, so behaviour is consistent. A handful of things to know:
 
 - **Two settings files.** Flatpak writes to `~/.var/app/org.tunaos.finupdate.Devel/config/finupdate/settings.json`; the panel writes to `~/.config/finupdate/settings.json`. Preferences don't sync between them.
-- **Polkit is shared.** Both paths invoke the same `pkexec finupdate-runner` for privileged actions; the polkit rule in `build-aux/49-finupdate.polkit.rules` covers both.
+- **Polkit is shared.** Both paths invoke the same host `pkexec finupdate-runner` for privileged actions; the polkit rule in `build-aux/49-finupdate.polkit.rules` covers both. The Flatpak runs the host copy at `/usr/bin/finupdate-runner` or `/usr/libexec/finupdate-runner`. If the host does not have one, an update stops with exit code 127.
 - **`bootc` detection is path-aware.** Inside the flatpak we use `flatpak-spawn --host bootc status --json`. The panel calls `bootc` directly. Same backend code, single `update_worker::is_flatpak()` switch picks the right transport.
 - **Don't run an Install in both at the same time.** Nothing prevents it today; symptoms would be two `pkexec` prompts and a bootc-lock collision. A file lock is on the [carry-forward list](https://github.com/tuna-os/finupdate/pull/1) — file an issue if you hit it.
 
