@@ -9,9 +9,7 @@ Finupdate requires elevated privileges to interact with bootc and system managem
 ### Purpose
 Allows members of the `wheel` group to run the allowlisted bootc and
 finupdate-runner programs with no password prompt. Members can also reboot the
-system and start/stop the `uupd.timer` unit without a prompt; enabling or
-disabling that timer's unit file still asks for the admin password (see
-Security Notes). Designed for:
+system. Designed for:
 - Automated testing in CI/CD environments
 - Development/debug mode operations
 - Non-destructive command verification (bootc status, upgrade checks)
@@ -38,17 +36,6 @@ polkit.addRule(function(action, subject) {
         if (action.id == "org.freedesktop.login1.reboot") {
             return polkit.Result.YES;
         }
-        // Scoped to the one unit finupdate actually starts/stops. systemd
-        // supplies a per-call "unit" detail for this action.
-        if (action.id == "org.freedesktop.systemd1.manage-units") {
-            if (action.lookup("unit") == "uupd.timer") {
-                return polkit.Result.YES;
-            }
-        }
-        // manage-unit-files (enable/disable) is NOT granted: systemd does
-        // not expose a per-unit detail for it, so it cannot be scoped, and
-        // an unscoped grant is passwordless root. This falls through to
-        // the system default (password prompt) instead.
     }
 });
 ```
@@ -80,33 +67,25 @@ Executed via:
 - Polkit action: `org.freedesktop.login1.reboot`
 
 #### Systemd unit management
-- `org.freedesktop.systemd1.manage-units` — start/stop the `uupd.timer` unit
-  (`systemctl start|stop --now uupd.timer`). The rule checks
-  `action.lookup("unit") == "uupd.timer"` and grants **only** that unit —
-  not "otherwise manage the systemd units used by finupdate" in general.
-- `org.freedesktop.systemd1.manage-unit-files` — would cover enabling or
-  disabling the timer's unit file (the other half of
-  `systemctl enable|disable --now uupd.timer`). The rule does **not** grant
-  this: systemd does not pass a per-unit detail for this action on the
-  systemd versions checked, so there's no way to scope a YES to
-  `uupd.timer` specifically, and a blanket YES would authorize writing or
-  linking any unit file as root. This falls through to polkit's default
-  authority, i.e. it prompts for the admin password.
+The rule does not grant `org.freedesktop.systemd1.manage-units` or
+`org.freedesktop.systemd1.manage-unit-files`. Finupdate turns the `uupd`
+timer on or off with `pkexec systemctl enable|disable --now uupd.timer`.
+`systemctl` then runs as root, so systemd does not ask polkit about the unit.
+`pkexec` asks for the admin password, because `systemctl` is not on the
+allowlist.
 
-Treat any change to the finupdate code that selects or changes which
-systemd unit is touched as a change to this privilege boundary — the
-allowlist above is `uupd.timer` and nothing else.
+Do not add a grant for these two actions. A grant for the `wheel` group gives
+each session control of all units and unit files with no password. That is
+root code execution. The `manage-unit-files` action has no unit detail, so a
+rule cannot limit it to one unit.
 
 ### Security Notes
 
 **Scope**: Limited to members of `wheel`, and — for `pkexec` — to the exact
-program paths on the allowlist, and — for systemd unit management — to the
-single `uupd.timer` unit via `manage-units`. It does not authorize arbitrary
-root command execution or arbitrary unit-file writes *provided* the exec
-allowlist stays exact-match with root-owned entries and the unit check stays
-an exact-match on `action.lookup("unit")`. A substring match on the exec
-path, an entry under a user-writable directory, or restoring an unscoped
-`manage-units`/`manage-unit-files` grant each remove that guarantee.
+program paths on the allowlist. It does not authorize arbitrary root command
+execution *provided* the allowlist stays exact-match and every entry is
+root-owned. A substring match, or an entry under a user-writable directory,
+removes that guarantee entirely.
 
 **Assumptions**: This configuration assumes members of `wheel` are trusted
 with system administration. Note what it still changes even so: `sudo`
