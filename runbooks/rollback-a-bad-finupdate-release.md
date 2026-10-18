@@ -4,9 +4,11 @@
 users — it crashes on launch, fails to elevate, reports wrong update state, or
 otherwise has to stop reaching machines now.
 
-**Do not use for:** a failed publish run. If `Publish Flatpak` itself failed,
-nothing new reached the remote and users are still on the previous build —
-fix forward on `main` instead.
+**Do not assume a failed publish is harmless.** The reusable publisher runs one
+matrix leg per architecture. A leg can push its architecture tag and update the
+central index before another leg fails, so a red `Publish Flatpak` run may have
+partially reached users. If the tags and index are unchanged, fix forward on
+`main`; otherwise treat it as a partial release and use this runbook.
 
 ---
 
@@ -28,7 +30,7 @@ fix forward on `main` instead.
 
 ---
 
-## 1. Confirm what is live
+## 1. Confirm what is live, including partial publishes
 
 ```sh
 # Most recent publish runs, newest first — note the head SHA and finish time.
@@ -41,10 +43,12 @@ gh api "orgs/tuna-os/packages/container/finupdate/versions?per_page=20" \
   --jq '.[] | "\(.updated_at)  \(.name)  tags=\(.metadata.container.tags | join(","))"'
 ```
 
-The image version whose `updated_at` matches the finish time of the newest
-successful publish run is the build users are getting. Write down both the
-digest and the commit SHA — the timestamp match is currently the only link
-between them.
+For a successful run, the image version whose `updated_at` matches the finish
+time of the newest successful publish run is the build users are getting. For a
+failed run, inspect `latest-x86_64` and `latest-aarch64` separately: any digest
+updated during the failed run is a partial publish and must be treated as
+potentially live. Write down every changed digest and its commit SHA; the
+timestamp match is currently the only link between them.
 
 ## 2. Identify the last-good build
 
