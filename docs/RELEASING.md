@@ -1,22 +1,22 @@
 # Releasing Finupdate
 
 A Finupdate release has one version identity: `v<version>`. The Git tag,
-GitHub Release, changelog heading, and versioned OCI artifact tags must all
+GitHub Release, changelog heading, and the OCI tags for the version must all
 come from the same commit.
 
 ## Release contract
 
-- `Cargo.toml` contains the release version, currently `0.1.0`.
+- `Cargo.toml` contains the release version, now `0.1.0`.
 - `CHANGELOG.md` contains a `## [<version>]` entry for that version.
 - The tag is `v<version>` and points at a commit with a successful `CI` run.
-- The publish workflow creates or publishes the GitHub Release before the
-  reusable Flatpak workflow uploads bundles.
+- The publish workflow creates or publishes the GitHub Release. Then the
+  shared workflow uploads the Flatpak bundles.
 - The reusable workflow publishes these OCI tags for a version tag such as
   `v0.1.0`:
   - `v0.1.0-x86_64`
   - `v0.1.0-aarch64`
   - `latest`, `latest-x86_64`, and `latest-aarch64` for the current remote
-- The central Flatpak index continues to follow `latest`. Consumers that need
+- The Flatpak index of TunaOS follows `latest`. Consumers that need
   an immutable OCI reference should use the architecture-specific version tag
   matching their target machine.
 
@@ -25,7 +25,7 @@ prefix is never replaced with `latest` or a bare version number.
 
 ## Cut a release
 
-Run the normal checks on the exact commit that will be tagged:
+Run the normal checks on the exact commit that you tag:
 
 ```sh
 cargo fmt --all -- --check
@@ -40,7 +40,7 @@ cargo clippy --all-targets -- \
 GDK_BACKEND=broadway BROADWAY_DISPLAY=:0 cargo test --workspace --all-targets
 ```
 
-Confirm the working tree is clean and that the version and changelog agree:
+Make sure that the tree has no local changes and that the version and changelog agree:
 
 ```sh
 VERSION=$(awk -F'"' '/^version = / { print $2; exit }' Cargo.toml)
@@ -55,10 +55,10 @@ git tag -a "v$VERSION" -m "Release v$VERSION" HEAD
 git push upstream "v$VERSION"
 ```
 
-`Publish Flatpak` then performs the release gate. It verifies the tag and
-changelog version, requires a successful `CI` run for the tagged commit, and
-creates or publishes the GitHub Release before the reusable workflow builds
-the x86_64 and aarch64 OCI/Flatpak matrix and attaches both Flatpak bundles.
+`Publish Flatpak` then does the release gate. It verifies the tag and
+changelog version. It needs a successful `CI` run for the tagged commit. It
+creates or publishes the GitHub Release. Then the shared workflow builds
+the x86_64 and aarch64 images and attaches the two Flatpak bundles.
 
 ## Verify a published release
 
@@ -80,7 +80,7 @@ architecture-specific release tags, and the GitHub Release must list both
 architecture-specific `.flatpak` bundles.
 
 Downstream installers, image builders, and registry consumers can pin the
-release by selecting `v0.1.0-x86_64` or `v0.1.0-aarch64`. Flatpak users of the
+release with `v0.1.0-x86_64` or `v0.1.0-aarch64`. Flatpak users of the
 TunaOS remote continue to receive the index's `latest` entry.
 
 For an incident after publication, use
